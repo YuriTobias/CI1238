@@ -67,12 +67,12 @@ void imprimeLPSolve(producao_t *p) {
 
     printf("max: ");
     for(i = 0; i < p->p; i++)
-        printf("%.1fx%d ", p->lucro[i], (i+1));
+        printf("+ %.1fx%d ", p->lucro[i], (i+1));
     printf(";\n\n");
 
     for(i = 0; i < p->c; i++) {
         for(j = 0; j < p->p; j++) {
-            printf("%.1fx%d ", p->quantidadeCP[j][i], (j+1));
+            printf("+ %.1fx%d ", p->quantidadeCP[j][i], (j+1));
         }
         printf("<= %.1f ;\n", p->limiteC[i]);
     }
