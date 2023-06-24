@@ -79,6 +79,28 @@ int main(int argc, char *argv[]) {
     input_t *input = malloc(sizeof(input_t));
     
     inputHandler(argc, argv, input);
+
+    // minC(X, l, n) { 
+    // l => altura da arvore
+    // n => quantidade de herois
+    // if l == n
+    //     {   
+    //         // Afinidades:
+    //         // !Todos os que possuem afinidade estão no mesmo grupo? 
+    //         // !Tem algum grupo vazio?
+    //             {
+    //                 // Otimalidade
+    //                 NumCAtual < NumCOpt
+    //                     // Deu boa, faz a troca
+    //                     // Salvar OptX 
+    //             }
+    //     }
+    // else 
+    //     {
+    //         // Coloca no Grupo A
+    //         // Não coloca no Grupo A
+    //     }
+    // }
     // Here hoes the whole logic
     // for(int i = 0; i < input->cNum; i++) {
     //     printf("%d,%d\n", input->cPairs->i[i], input->cPairs->j[i]);
