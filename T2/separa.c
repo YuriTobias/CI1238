@@ -198,8 +198,8 @@ void backtrackingViabilidade(int l, int *x, int numH, int group[], int groupOpt[
     }
 }
 
-void calculaTriangulo(int round, int first, int daVez, int *cC, input_t *inp) {    
-    if(round == 3) {
+void calculaFigura(int round, int roundMax, int first, int daVez, int *cC, input_t *inp) {
+    if(round == roundMax) {
         for(int i = 0; i < inp->cNum; i++) {
             if(inp->cPairs->i[i] == daVez && inp->cPairs->j[i] == first) {
                 *cC = *cC + 1;
@@ -211,31 +211,12 @@ void calculaTriangulo(int round, int first, int daVez, int *cC, input_t *inp) {
         }
     } else {
         for(int i = 0; i < inp->cNum; i++) {
-            if(inp->cPairs->i[i] == daVez && inp->cPairs->j[i] > daVez)
-                calculaTriangulo(round + 1, first, inp->cPairs->j[i], cC, inp);
-            else if(inp->cPairs->j[i] == daVez && inp->cPairs->i[i] > daVez)
-                calculaTriangulo(round + 1, first, inp->cPairs->i[i], cC, inp);
-        }
-    }
-}
-
-void calculaPentagono(int round, int first, int daVez, int *cC, input_t *inp) {
-    if(round == 5) {
-        for(int i = 0; i < inp->cNum; i++) {
-            if(inp->cPairs->i[i] == daVez && inp->cPairs->j[i] == first) {
-                *cC = *cC + 1;
-                return;
-            } else if(inp->cPairs->j[i] == daVez && inp->cPairs->i[i] == first) {
-                *cC = *cC + 1;
-                return;
+            if(inp->cPairs->i[i] == daVez && inp->cPairs->j[i] > daVez) {
+                (roundMax == 5) ? calculaFigura(round + 1, 5, first, inp->cPairs->j[i], cC, inp) : calculaFigura(round + 1, 3, first, inp->cPairs->j[i], cC, inp);
             }
-        }
-    } else {
-        for(int i = 0; i < inp->cNum; i++) {
-            if(inp->cPairs->i[i] == daVez && inp->cPairs->j[i] > daVez)
-                calculaPentagono(round + 1, first, inp->cPairs->j[i], cC, inp);
+                
             else if(inp->cPairs->j[i] == daVez && inp->cPairs->i[i] > daVez)
-                calculaPentagono(round + 1, first, inp->cPairs->i[i], cC, inp);
+                (roundMax == 5) ? calculaFigura(round + 1, 5, first, inp->cPairs->i[i], cC, inp) : calculaFigura(round + 1, 3, first, inp->cPairs->i[i], cC, inp);
         }
     }
 }
@@ -249,9 +230,11 @@ void calculaPentagono(int round, int first, int daVez, int *cC, input_t *inp) {
     • groupOpt[]: vetor com os heróis do grupo com o 1 herói do caso "ótimo"
     • inp: input que contém os vetores de afinidades e conflitos
 */
-void backtrackingOtimalidade(int l, int *x, int numH, int group[], int groupOpt[], input_t *inp) {
+void backtrackingOtimalidade(int l, int *x, int numH, int group[], int groupOpt[], input_t *inp, int *qNodo) {
     int valido = 0;
     int conflitos = 0;
+
+    *qNodo = *qNodo + 1;
 
     if(l == numH) {
         // !Tem algum grupo vazio?
@@ -296,41 +279,45 @@ void backtrackingOtimalidade(int l, int *x, int numH, int group[], int groupOpt[
                      }
             }
 
-            // printf("Entrei\n");
-            // for(int i = 0; i < l; i++) {
-            //     printf("[%d] ", group[i]);
-            // }
-            // printf("\n");
-            // printf("O número de conflitos eh: %d\n", calculaTriangulo(l, group, inp));
-
-            // printf("Conflitos: %d\n", conflitos);
-        // }
-    } else {
-        if(l == 3) {
             printf("Entrei\n");
             for(int i = 0; i < l; i++) {
                 printf("[%d] ", group[i]);
             }
             printf("\n");
-            int conf = 0;
-            // Calcular os conflitos até então
-            for(int i = 0; i < l; i++)
-                for(int j = 0; j < inp->cNum; j++) 
-                    if((inp->cPairs->i[j] == (i+1)) && (inp->cPairs->j[j] < (l+1)) && (group[i] == group[inp->cPairs->j[j] - 1]))
-                        conf++;
-            printf("Conf antes %d\n", conf);
+            printf("O número de conflitos eh: %d\n", conflitos);
 
-            for(int i = l; i < inp->hNum; i++) {
-                calculaPentagono(1, i, i, &conf, inp);
-                calculaTriangulo(1, i, i, &conf, inp);
-            }
-
-            printf("O número de conflitos depois eh: %d\n", conf);
+            // printf("Conflitos: %d\n", conflitos);
+        // }
+    } else {
+        printf("Entrei\n");
+        for(int i = 0; i < l; i++) {
+            printf("[%d] ", group[i]);
         }
+        printf("\n");
+        // Calcular os conflitos até então
+        for(int i = 0; i < l; i++)
+            for(int j = 0; j < inp->cNum; j++) 
+                if((inp->cPairs->i[j] == (i+1)) && (inp->cPairs->j[j] < (l+1)) && (group[i] == group[inp->cPairs->j[j] - 1]))
+                    conflitos++;
+        printf("Conflitos antes %d\n", conflitos);
+
+        for(int i = l; i < inp->hNum; i++) {
+            calculaFigura(1, 5, i, i, &conflitos, inp);
+            calculaFigura(1, 3, i, i, &conflitos, inp);
+        }
+
+        printf("O número de conflitos depois eh: %d\n", conflitos);
+        
+        if(*x == -1)
+            *x = conflitos;
+
+        if(conflitos > *x)
+            return;
+            
         group[l] = 1;
-        backtrackingOtimalidade(l + 1, x, numH, group, groupOpt, inp);
+        backtrackingOtimalidade(l + 1, x, numH, group, groupOpt, inp, qNodo);
         group[l] = 0;
-        backtrackingOtimalidade(l + 1, x, numH, group, groupOpt, inp);
+        backtrackingOtimalidade(l + 1, x, numH, group, groupOpt, inp, qNodo);
     }
 }
 
@@ -346,13 +333,15 @@ void deleteInput(input_t *inp) {
 
 int main(int argc, char *argv[]) {
     input_t *input = malloc(sizeof(input_t));
-    int escolhas[100], x = -1, escolhasOpt[100];
+    int escolhas[100], x = -1, escolhasOpt[100], quant = 0;
 
     inputHandler(argc, argv, input);
 
+    printf("Quant: %d\n", quant);
     //backtracking(0, &x, input->hNum, escolhas, escolhasOpt, input);
     //backtrackingViabilidade(0, &x, input->hNum, escolhas, escolhasOpt, input);
-    backtrackingOtimalidade(0, &x, input->hNum, escolhas, escolhasOpt, input);
+    backtrackingOtimalidade(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant);
+    printf("Quant: %d\n", quant);
 
     // printf("x: %d\n", x);
     // for(int i = 0; i < input->hNum; i++) {
