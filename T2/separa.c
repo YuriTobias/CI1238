@@ -219,6 +219,27 @@ void calculaTriangulo(int round, int first, int daVez, int *cC, input_t *inp) {
     }
 }
 
+void calculaPentagono(int round, int first, int daVez, int *cC, input_t *inp) {
+    if(round == 5) {
+        for(int i = 0; i < inp->cNum; i++) {
+            if(inp->cPairs->i[i] == daVez && inp->cPairs->j[i] == first) {
+                *cC = *cC + 1;
+                return;
+            } else if(inp->cPairs->j[i] == daVez && inp->cPairs->i[i] == first) {
+                *cC = *cC + 1;
+                return;
+            }
+        }
+    } else {
+        for(int i = 0; i < inp->cNum; i++) {
+            if(inp->cPairs->i[i] == daVez && inp->cPairs->j[i] > daVez)
+                calculaPentagono(round + 1, first, inp->cPairs->j[i], cC, inp);
+            else if(inp->cPairs->j[i] == daVez && inp->cPairs->i[i] > daVez)
+                calculaPentagono(round + 1, first, inp->cPairs->i[i], cC, inp);
+        }
+    }
+}
+
 /*
     Opções de entrada:
     • l: herói da vez;
@@ -299,8 +320,10 @@ void backtrackingOtimalidade(int l, int *x, int numH, int group[], int groupOpt[
                         conf++;
             printf("Conf antes %d\n", conf);
 
-            for(int i = l; i < inp->hNum; i++)
+            for(int i = l; i < inp->hNum; i++) {
+                calculaPentagono(1, i, i, &conf, inp);
                 calculaTriangulo(1, i, i, &conf, inp);
+            }
 
             printf("O número de conflitos depois eh: %d\n", conf);
         }
@@ -331,13 +354,13 @@ int main(int argc, char *argv[]) {
     //backtrackingViabilidade(0, &x, input->hNum, escolhas, escolhasOpt, input);
     backtrackingOtimalidade(0, &x, input->hNum, escolhas, escolhasOpt, input);
 
-    printf("x: %d\n", x);
-    for(int i = 0; i < input->hNum; i++) {
-        printf("%d ", escolhasOpt[i]);
-        if(escolhasOpt[i + 1] == 0)
-            i = input->hNum;
-    }
-    printf("\n");
+    // printf("x: %d\n", x);
+    // for(int i = 0; i < input->hNum; i++) {
+    //     printf("%d ", escolhasOpt[i]);
+    //     if(escolhasOpt[i + 1] == 0)
+    //         i = input->hNum;
+    // }
+    // printf("\n");
     
     // X é o grupo ótimo
     // minC(X, l, n) { 
@@ -372,35 +395,3 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
-
-// Calcular triângulos
-    // for(int i = l; i < inp->hNum - 2; i++) {
-    //     printf("Entrei no triângulo\n");
-    //     for(int j = 0; j < inp->cNum; j++) {
-    //         // Verifica se o cara tem conflito com alguém
-    //         if(((inp->cPairs->i[j] == (i+1)) && (inp->cPairs->j[j] > (i+1))) || ((inp->cPairs->j[j] == (i+1)) && (inp->cPairs->i[j] > (i+1)))) { 
-    //             for(int k = (j + 1); k < inp->cNum; k++) {
-    //                 // Verifica se o cara tem conflito com mais alguém
-    //                 if(((inp->cPairs->i[k] == (i+1)) && (inp->cPairs->j[k] > (i+1))) || ((inp->cPairs->j[k] == (i+1)) && (inp->cPairs->i[k] > (i+1)))) { 
-    //                     for(int n = 0; n < inp->cNum; n++) {
-    //                         // Verifica se os dois caras com quem o primeiro cara tem conflito possuem conflito entre si
-    //                         // 1° Caso: ambos elementos em j
-    //                         if(((((inp->cPairs->i[n]) == (inp->cPairs->j[j])) && (inp->cPairs->i[n] != (i+1))) 
-    //                         && (((inp->cPairs->j[n]) == (inp->cPairs->j[k])) && (inp->cPairs->j[n] != (i+1))))
-    //                         || (((((inp->cPairs->i[n]) == (inp->cPairs->j[k])) && (inp->cPairs->i[n] != (i+1))) 
-    //                         && (((inp->cPairs->j[n]) == (inp->cPairs->j[j])) && (inp->cPairs->j[n] != (i+1)))))) {
-    //                             conf++;
-    //                         } 
-    //                         // 2° Caso: ambos elementos em i
-    //                         else if((((inp->cPairs->i[n]) == (inp->cPairs->i[j])) && (inp->cPairs->i[n] != (i+1))) && (((inp->cPairs->j[n]) == (inp->cPairs->i[k])) && (inp->cPairs->j[n] != (i+1)))) {
-    //                             conf++;
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-    // printf("Conf depois %d\n", conf);
-
-    // return conf;
