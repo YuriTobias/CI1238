@@ -21,12 +21,6 @@ typedef struct input_t {
     sets_t *aPairs; // Set of affinity pairs
 }input_t;
 
-typedef struct hero {
-    int heroIndex; // Integer value that represents the hero
-    int affWith; // Index of another hero (affinity)
-    int cWith; // Index of another hero (conflict)
-}hero_t;
-
 void allocateInput(input_t *inp) {
     inp->cPairs = malloc(sizeof(sets_t));
     inp->cPairs->i = malloc(sizeof(int)*inp->cNum);
@@ -35,20 +29,6 @@ void allocateInput(input_t *inp) {
     inp->aPairs->i = malloc(sizeof(int)*inp->aNum);
     inp->aPairs->j = malloc(sizeof(int)*inp->aNum);
 }
-
-void fillVariables(input_t *inp, hero_t *allHeroes) {
-
-    int i;
-
-    // Set indexes
-    for (i = 1; i <= inp->hNum; i++)
-        allHeroes[i].heroIndex = i;
-
-    // Set affinities
-    for (i = 0; i < inp->aNum; i++)
-        allHeroes[inp->aPairs->i[i]].affWith = inp->aPairs->j[i];   
-}
-
 
 /* 
     Opções de entrada:
@@ -85,6 +65,69 @@ void inputHandler(int argNum, char *args[], input_t *inp) {
     }
 }
 
+/*
+    Opções de entrada:
+    • l: herói da vez;
+    • x: quantidade "ótima" de conflitos;
+    • group[]: vetor com os heróis do grupo com o 1 herói;
+    • numH: número total de heróis;
+*/
+void backtracking(int l, int *x, int numH, int group[], int groupOpt[], input_t *inp) {
+    int valido = 0;
+    int conflitos = 0;
+
+    if(l == numH) {
+        // !Tem algum grupo vazio?
+        for(int i = 0; i < numH - 1; i++) {
+            if(group[i] != group[i + 1]) {
+                valido = 1; // Valido == 1 quer dizer que existem herois nos dois grupos
+            }
+        }
+
+        // Se tem heroi nos dois grupos entra, senão segue o baile
+        if(valido) {
+            // !Todos os que possuem afinidade estão no mesmo grupo? 
+            for(int i = 0; i < numH; i++)
+                for(int j = 0; j < inp->aNum; j++)
+                    if((inp->aPairs->i[j] == (i + 1)) && group[(inp->aPairs->j[j]) - 1] != group[i])
+                        valido = 0; // Valido == 0 quer dizer que existem herois com afinidade em grupos diferentes
+        }
+
+        // Se passou pelo for acima e continuou com válido == 1 então é valido
+        if(valido) {
+            for(int i = 0; i < numH; i++) {
+                printf("[%d] ", group[i]);
+            }
+            printf("\n");
+
+            for(int i = 0; i < numH; i++)
+                for(int j = 0; j < inp->cNum; j++)
+                    if((inp->cPairs->i[j] == (i + 1)) && group[(inp->cPairs->j[j]) - 1] == group[i])
+                        conflitos++;
+
+            int cont = 0;
+            if(conflitos < *x || *x == -1) {
+                *x = conflitos;
+                groupOpt[0] = group[0];
+                cont++;
+                for(int i = 1; i < numH; i++)
+                     if(group[i] == group[0]) {
+                        groupOpt[cont] = i+1;
+                        cont++;
+                     }
+            }
+
+            printf("Conflitos: %d\n", conflitos);
+        }
+    } else {
+        group[l] = 1;
+        backtracking(l + 1, x, numH, group, groupOpt, inp);
+        group[l] = 0;
+        backtracking(l + 1, x, numH, group, groupOpt, inp);
+    }
+
+}
+
 void deleteInput(input_t *inp) {
     free(inp->cPairs->i);
     free(inp->cPairs->j);
@@ -97,19 +140,21 @@ void deleteInput(input_t *inp) {
 
 int main(int argc, char *argv[]) {
     input_t *input = malloc(sizeof(input_t));
-    hero_t *allHeroes;
-    
+    int escolhas[100], x = -1, escolhasOpt[100];
+
     inputHandler(argc, argv, input);
 
-    // Allocates array to store all the heroes
-    allHeroes = malloc(sizeof(hero_t) * (input->hNum + 1));
+    backtracking(0, &x, input->hNum, escolhas, escolhasOpt, input);
 
-    fillVariables(input, allHeroes);
-
-    for (int i = 1; i <= input->hNum; i++)
-        printf("\n%d %d ", allHeroes[i].heroIndex, allHeroes[i].affWith);
-   
-
+    printf("x: %d\n", x);
+    for(int i = 0; i < input->hNum; i++) {
+        printf("%d ", escolhasOpt[i]);
+        if(escolhasOpt[i + 1] == 0)
+            i = input->hNum;
+    }
+    printf("\n");
+    
+    // X é o grupo ótimo
     // minC(X, l, n) { 
     // l => altura da arvore
     // n => quantidade de herois
@@ -139,7 +184,6 @@ int main(int argc, char *argv[]) {
     //     printf("%d,%d\n", input->aPairs->i[i], input->aPairs->j[i]);
     // }
     deleteInput(input);
-    free(allHeroes);
 
     return 0;
 }
