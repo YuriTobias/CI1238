@@ -21,6 +21,12 @@ typedef struct input_t {
     sets_t *aPairs; // Set of affinity pairs
 }input_t;
 
+typedef struct hero {
+    int heroIndex; // Integer value that represents the hero
+    int affWith; // Index of another hero (affinity)
+    int cWith; // Index of another hero (conflict)
+}hero_t;
+
 void allocateInput(input_t *inp) {
     inp->cPairs = malloc(sizeof(sets_t));
     inp->cPairs->i = malloc(sizeof(int)*inp->cNum);
@@ -29,6 +35,20 @@ void allocateInput(input_t *inp) {
     inp->aPairs->i = malloc(sizeof(int)*inp->aNum);
     inp->aPairs->j = malloc(sizeof(int)*inp->aNum);
 }
+
+void fillVariables(input_t *inp, hero_t *allHeroes) {
+
+    int i;
+
+    // Set indexes
+    for (i = 1; i <= inp->hNum; i++)
+        allHeroes[i].heroIndex = i;
+
+    // Set affinities
+    for (i = 0; i < inp->aNum; i++)
+        allHeroes[inp->aPairs->i[i]].affWith = inp->aPairs->j[i];   
+}
+
 
 /* 
     Opções de entrada:
@@ -77,8 +97,18 @@ void deleteInput(input_t *inp) {
 
 int main(int argc, char *argv[]) {
     input_t *input = malloc(sizeof(input_t));
+    hero_t *allHeroes;
     
     inputHandler(argc, argv, input);
+
+    // Allocates array to store all the heroes
+    allHeroes = malloc(sizeof(hero_t) * (input->hNum + 1));
+
+    fillVariables(input, allHeroes);
+
+    for (int i = 1; i <= input->hNum; i++)
+        printf("\n%d %d ", allHeroes[i].heroIndex, allHeroes[i].affWith);
+   
 
     // minC(X, l, n) { 
     // l => altura da arvore
@@ -109,6 +139,7 @@ int main(int argc, char *argv[]) {
     //     printf("%d,%d\n", input->aPairs->i[i], input->aPairs->j[i]);
     // }
     deleteInput(input);
+    free(allHeroes);
 
     return 0;
 }
