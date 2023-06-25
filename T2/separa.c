@@ -268,9 +268,10 @@ void backtrackingOtimalidade(int l, int *x, int numH, int group[], int groupOpt[
 
             // Verifica se a solução é melhor ou nem
             int cont = 0;
-            if(conflitos < *x || *x == -1) {
+            printf("Conflitos: %d e x: %d\n", conflitos, *x);
+            if(conflitos <= *x || *x == -1) {
                 *x = conflitos;
-                groupOpt[0] = group[0];
+                groupOpt[0] = 1;
                 cont++;
                 for(int i = 1; i < numH; i++)
                      if(group[i] == group[0]) {
@@ -289,24 +290,24 @@ void backtrackingOtimalidade(int l, int *x, int numH, int group[], int groupOpt[
             // printf("Conflitos: %d\n", conflitos);
         // }
     } else {
-        printf("Entrei\n");
-        for(int i = 0; i < l; i++) {
-            printf("[%d] ", group[i]);
-        }
-        printf("\n");
+        // printf("Entrei\n");
+        // for(int i = 0; i < l; i++) {
+        //     printf("[%d] ", group[i]);
+        // }
+        // printf("\n");
         // Calcular os conflitos até então
         for(int i = 0; i < l; i++)
             for(int j = 0; j < inp->cNum; j++) 
                 if((inp->cPairs->i[j] == (i+1)) && (inp->cPairs->j[j] < (l+1)) && (group[i] == group[inp->cPairs->j[j] - 1]))
                     conflitos++;
-        printf("Conflitos antes %d\n", conflitos);
+        // printf("Conflitos antes %d\n", conflitos);
 
         for(int i = l; i < inp->hNum; i++) {
-            calculaFigura(1, 5, i, i, &conflitos, inp);
+            // calculaFigura(1, 5, i, i, &conflitos, inp);
             calculaFigura(1, 3, i, i, &conflitos, inp);
         }
 
-        printf("O número de conflitos depois eh: %d\n", conflitos);
+        // printf("O número de conflitos depois eh: %d\n", conflitos);
         
         if(*x == -1)
             *x = conflitos;
@@ -318,6 +319,141 @@ void backtrackingOtimalidade(int l, int *x, int numH, int group[], int groupOpt[
         backtrackingOtimalidade(l + 1, x, numH, group, groupOpt, inp, qNodo);
         group[l] = 0;
         backtrackingOtimalidade(l + 1, x, numH, group, groupOpt, inp, qNodo);
+    }
+}
+
+/*
+    Opções de entrada:
+    • l: herói da vez;
+    • x: quantidade "ótima" de conflitos;
+    • numH: número total de heróis;
+    • group[]: vetor com os heróis do grupo com o 1 herói;
+    • groupOpt[]: vetor com os heróis do grupo com o 1 herói do caso "ótimo"
+    • inp: input que contém os vetores de afinidades e conflitos
+*/
+void separaGrupos(int l, int *x, int numH, int group[], int groupOpt[], input_t *inp, int *qNodo, int a, int o, int f) {
+    int valido = 0;
+    int conflitos = 0;
+    int caminho = -1;
+    int restricao = 0;
+
+    *qNodo = *qNodo + 1;
+
+    if(l == numH) {
+        // !Tem algum grupo vazio?
+        for(int i = 0; i < numH - 1; i++) {
+            if(group[i] != group[i + 1]) {
+                valido = 1; // Valido == 1 quer dizer que existem herois nos dois grupos
+            }
+        }
+
+        // Se tem heroi nos dois grupos entra, senão segue o baile
+        if(valido) {
+            // !Todos os que possuem afinidade estão no mesmo grupo? 
+            for(int i = 0; i < numH; i++)
+                for(int j = 0; j < inp->aNum; j++)
+                    if((inp->aPairs->i[j] == (i + 1)) && group[(inp->aPairs->j[j]) - 1] != group[i])
+                        valido = 0; // Valido == 0 quer dizer que existem herois com afinidade em grupos diferentes
+        }
+
+        // Se passou pelo for acima e continuou com válido == 1 então é valido
+        if(valido) {
+            // Calcula a quantidade de conflitos presente no grupo
+            for(int i = 0; i < numH; i++)
+                for(int j = 0; j < inp->cNum; j++)
+                    if((inp->cPairs->i[j] == (i + 1)) && group[(inp->cPairs->j[j]) - 1] == group[i])
+                        conflitos++;
+
+            // Verifica se a solução é melhor ou nem
+            int cont = 0;
+            if(conflitos <= *x || *x == -1) {
+                *x = conflitos;
+                groupOpt[0] = 1;
+                cont++;
+                for(int i = 1; i < numH; i++)
+                     if(group[i] == group[0]) {
+                        groupOpt[cont] = i+1;
+                        cont++;
+                     }
+            }
+        }
+    } else {
+        if(f && !o) {
+            caminho = -1;
+            for (int j = 0; j < inp->aNum; j++) {
+                if((inp->aPairs->i[j] == l+1) && (inp->aPairs->j[j] < l+1)) {
+                    caminho = group[inp->aPairs->j[j] - 1];
+                    restricao = 1;
+                } else if((inp->aPairs->j[j] == l+1) && (inp->aPairs->i[j] < l+1)) {
+                    caminho = group[inp->aPairs->i[j] - 1];
+                    restricao = 1;
+                }
+            }
+        } else if(o && !f) {
+            for(int i = 0; i < l; i++)
+                for(int j = 0; j < inp->cNum; j++) 
+                    if((inp->cPairs->i[j] == (i+1)) && (inp->cPairs->j[j] < (l+1)) && (group[i] == group[inp->cPairs->j[j] - 1]))
+                        conflitos++;
+
+            for(int i = l; i < inp->hNum; i++) {
+                if(!a)
+                    calculaFigura(1, 5, i, i, &conflitos, inp);
+                
+                calculaFigura(1, 3, i, i, &conflitos, inp);
+            }
+
+            // if(*x == -1)
+            *x = 70000;
+
+            if(conflitos > *x)
+                return;
+        } else if (f && o) {
+            caminho = -1;
+            for (int j = 0; j < inp->aNum; j++) {
+                if((inp->aPairs->i[j] == l+1) && (inp->aPairs->j[j] < l+1)) {
+                    caminho = group[inp->aPairs->j[j] - 1];
+                    restricao = 1;
+                } else if((inp->aPairs->j[j] == l+1) && (inp->aPairs->i[j] < l+1)) {
+                    caminho = group[inp->aPairs->i[j] - 1];
+                    restricao = 1;
+                }
+            }
+
+            for(int i = 0; i < l; i++)
+                for(int j = 0; j < inp->cNum; j++) 
+                    if((inp->cPairs->i[j] == (i+1)) && (inp->cPairs->j[j] < (l+1)) && (group[i] == group[inp->cPairs->j[j] - 1]))
+                        conflitos++;
+
+            for(int i = l; i < inp->hNum; i++) {
+                if(!a)
+                    calculaFigura(1, 5, i, i, &conflitos, inp);
+                
+                calculaFigura(1, 3, i, i, &conflitos, inp);
+            }
+
+            if(*x == -1)
+                *x = conflitos;
+
+            if(conflitos > *x)
+                return;
+        }
+
+        if(f) {
+            if(restricao) {
+                group[l] = caminho;
+                separaGrupos(l + 1, x, numH, group, groupOpt, inp, qNodo, a, o, f);
+            } else {
+                group[l] = 1;
+                separaGrupos(l + 1, x, numH, group, groupOpt, inp, qNodo, a, o, f);
+                group[l] = 0;
+                separaGrupos(l + 1, x, numH, group, groupOpt, inp, qNodo, a, o, f);
+            }
+        } else {
+            group[l] = 1;
+            separaGrupos(l + 1, x, numH, group, groupOpt, inp, qNodo, a, o, f);
+            group[l] = 0;
+            separaGrupos(l + 1, x, numH, group, groupOpt, inp, qNodo, a, o, f);
+        }
     }
 }
 
@@ -340,16 +476,17 @@ int main(int argc, char *argv[]) {
     printf("Quant: %d\n", quant);
     //backtracking(0, &x, input->hNum, escolhas, escolhasOpt, input);
     //backtrackingViabilidade(0, &x, input->hNum, escolhas, escolhasOpt, input);
-    backtrackingOtimalidade(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant);
+    //backtrackingOtimalidade(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant);
+    separaGrupos(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant, 1, 1, 0);
     printf("Quant: %d\n", quant);
 
-    // printf("x: %d\n", x);
-    // for(int i = 0; i < input->hNum; i++) {
-    //     printf("%d ", escolhasOpt[i]);
-    //     if(escolhasOpt[i + 1] == 0)
-    //         i = input->hNum;
-    // }
-    // printf("\n");
+    printf("x: %d\n", x);
+    for(int i = 0; i < input->hNum; i++) {
+        printf("%d ", escolhasOpt[i]);
+        if(escolhasOpt[i + 1] == 0)
+            i = input->hNum;
+    }
+    printf("\n");
     
     // X é o grupo ótimo
     // minC(X, l, n) { 
