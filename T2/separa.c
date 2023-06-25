@@ -65,47 +65,6 @@ void inputHandler(int argNum, char *args[], input_t *inp) {
     }
 }
 
-
-int calculaTriangulo(int l, int group[], input_t *inp) {
-    int conf = 0;
-
-    // Calcular os conflitos até então
-    for(int i = 0; i < l; i++) {
-        for(int j = 0; j < inp->cNum; j++) {
-            if((inp->cPairs->i[j] == (i+1)) && (inp->cPairs->j[j] < (i+1)) && (group[i] == group[inp->cPairs->j[j] - 1]))
-                conf++;
-            else if ((inp->cPairs->j[j] == (i+1)) && (inp->cPairs->i[j] < (i+1)) && (group[i] == group[inp->cPairs->i[j] - 1]))
-                conf++;
-        }
-    }
-
-    printf("Conf antes %d\n", conf);
-    // Calcular triângulos
-    for(int i = l; i < inp->hNum; i++) {
-        for(int j = 0; j < inp->cNum; j++) {
-            if(inp->cPairs->i[j] == (i+1)) {
-                for(int k = 0; k < inp->cNum; k++) {
-                    if(inp->cPairs->i[k] == inp->cPairs->j[j]) {
-                        for(int n = 0; n < inp->cNum; n++) {
-                            if(inp->cPairs->i[n] == inp->cPairs->j[k]) {
-                                for(int m = 0; m < inp->cNum; m++) {
-                                    if(inp->cPairs->i[m] == (i+1)) {
-                                        conf++;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    printf("Conf depois %d\n", conf/3);
-
-    return conf;
-}
-
-
 /*
     Opções de entrada:
     • l: herói da vez;
@@ -138,11 +97,6 @@ void backtracking(int l, int *x, int numH, int group[], int groupOpt[], input_t 
 
         // Se passou pelo for acima e continuou com válido == 1 então é valido
         if(valido) {
-            for(int i = 0; i < numH; i++) {
-                printf("[%d] ", group[i]);
-            }
-            printf("\n");
-
             // Calcula a quantidade de conflitos presente no grupo
             for(int i = 0; i < numH; i++)
                 for(int j = 0; j < inp->cNum; j++)
@@ -161,11 +115,8 @@ void backtracking(int l, int *x, int numH, int group[], int groupOpt[], input_t 
                         cont++;
                      }
             }
-
-            printf("Conflitos: %d\n", conflitos);
         }
     } else {
-        printf("O número de conflitos eh: %d\n", calculaTriangulo(l, group, inp));
         group[l] = 1;
         backtracking(l + 1, x, numH, group, groupOpt, inp);
         group[l] = 0;
@@ -247,6 +198,27 @@ void backtrackingViabilidade(int l, int *x, int numH, int group[], int groupOpt[
     }
 }
 
+void calculaTriangulo(int round, int first, int daVez, int *cC, input_t *inp) {    
+    if(round == 3) {
+        for(int i = 0; i < inp->cNum; i++) {
+            if(inp->cPairs->i[i] == daVez && inp->cPairs->j[i] == first) {
+                *cC = *cC + 1;
+                return;
+            } else if(inp->cPairs->j[i] == daVez && inp->cPairs->i[i] == first) {
+                *cC = *cC + 1;
+                return;
+            }
+        }
+    } else {
+        for(int i = 0; i < inp->cNum; i++) {
+            if(inp->cPairs->i[i] == daVez && inp->cPairs->j[i] > daVez)
+                calculaTriangulo(round + 1, first, inp->cPairs->j[i], cC, inp);
+            else if(inp->cPairs->j[i] == daVez && inp->cPairs->i[i] > daVez)
+                calculaTriangulo(round + 1, first, inp->cPairs->i[i], cC, inp);
+        }
+    }
+}
+
 /*
     Opções de entrada:
     • l: herói da vez;
@@ -259,22 +231,30 @@ void backtrackingViabilidade(int l, int *x, int numH, int group[], int groupOpt[
 void backtrackingOtimalidade(int l, int *x, int numH, int group[], int groupOpt[], input_t *inp) {
     int valido = 0;
     int conflitos = 0;
-    int caminho = -1;
-    int restricao = 0;
 
     if(l == numH) {
         // !Tem algum grupo vazio?
-        for(int i = 0; i < numH - 1; i++) {
-            if(group[i] != group[i + 1]) {
-                valido = 1; // Valido == 1 quer dizer que existem herois nos dois grupos
-            }
-        }
+        // for(int i = 0; i < numH - 1; i++) {
+        //     if(group[i] != group[i + 1]) {
+        //         valido = 1; // Valido == 1 quer dizer que existem herois nos dois grupos
+        //     }
+        // }
 
-        if(valido) {
-            for(int i = 0; i < numH; i++) {
-                printf("[%d] ", group[i]);
-            }
-            printf("\n");
+        // Se tem heroi nos dois grupos entra, senão segue o baile
+        // if(valido) {
+        //     // !Todos os que possuem afinidade estão no mesmo grupo? 
+        //     for(int i = 0; i < numH; i++)
+        //         for(int j = 0; j < inp->aNum; j++)
+        //             if((inp->aPairs->i[j] == (i + 1)) && group[(inp->aPairs->j[j]) - 1] != group[i])
+        //                 valido = 0; // Valido == 0 quer dizer que existem herois com afinidade em grupos diferentes
+        // }
+
+        // Se passou pelo for acima e continuou com válido == 1 então é valido
+        // if(valido) {
+            // for(int i = 0; i < numH; i++) {
+            //     printf("[%d] ", group[i]);
+            // }
+            // printf("\n");
 
             // Calcula a quantidade de conflitos presente no grupo
             for(int i = 0; i < numH; i++)
@@ -288,36 +268,46 @@ void backtrackingOtimalidade(int l, int *x, int numH, int group[], int groupOpt[
                 *x = conflitos;
                 groupOpt[0] = group[0];
                 cont++;
-                for(int i = 1; i < numH; i++) {
-                    if(group[i] == group[0]) {
+                for(int i = 1; i < numH; i++)
+                     if(group[i] == group[0]) {
                         groupOpt[cont] = i+1;
                         cont++;
-                    }
-                }
+                     }
             }
-        }
-    } else {
-        caminho = -1;
-        for (int j = 0; j < inp->aNum; j++) {
-            if((inp->aPairs->i[j] == l+1) && (inp->aPairs->j[j] < l+1)) {
-                caminho = group[inp->aPairs->j[j] - 1];
-                restricao = 1;
-            } else if((inp->aPairs->j[j] == l+1) && (inp->aPairs->i[j] < l+1)) {
-                caminho = group[inp->aPairs->i[j] - 1];
-                restricao = 1;
-            }
-        }
-        
 
-        if(restricao) {
-            group[l] = caminho;
-            backtrackingViabilidade(l + 1, x, numH, group, groupOpt, inp);
-        } else {
-            group[l] = 1;
-            backtrackingViabilidade(l + 1, x, numH, group, groupOpt, inp);
-            group[l] = 0;
-            backtrackingViabilidade(l + 1, x, numH, group, groupOpt, inp);
+            // printf("Entrei\n");
+            // for(int i = 0; i < l; i++) {
+            //     printf("[%d] ", group[i]);
+            // }
+            // printf("\n");
+            // printf("O número de conflitos eh: %d\n", calculaTriangulo(l, group, inp));
+
+            // printf("Conflitos: %d\n", conflitos);
+        // }
+    } else {
+        if(l == 3) {
+            printf("Entrei\n");
+            for(int i = 0; i < l; i++) {
+                printf("[%d] ", group[i]);
+            }
+            printf("\n");
+            int conf = 0;
+            // Calcular os conflitos até então
+            for(int i = 0; i < l; i++)
+                for(int j = 0; j < inp->cNum; j++) 
+                    if((inp->cPairs->i[j] == (i+1)) && (inp->cPairs->j[j] < (l+1)) && (group[i] == group[inp->cPairs->j[j] - 1]))
+                        conf++;
+            printf("Conf antes %d\n", conf);
+
+            for(int i = l; i < inp->hNum; i++)
+                calculaTriangulo(1, i, i, &conf, inp);
+
+            printf("O número de conflitos depois eh: %d\n", conf);
         }
+        group[l] = 1;
+        backtrackingOtimalidade(l + 1, x, numH, group, groupOpt, inp);
+        group[l] = 0;
+        backtrackingOtimalidade(l + 1, x, numH, group, groupOpt, inp);
     }
 }
 
@@ -337,8 +327,9 @@ int main(int argc, char *argv[]) {
 
     inputHandler(argc, argv, input);
 
-    backtracking(0, &x, input->hNum, escolhas, escolhasOpt, input);
+    //backtracking(0, &x, input->hNum, escolhas, escolhasOpt, input);
     //backtrackingViabilidade(0, &x, input->hNum, escolhas, escolhasOpt, input);
+    backtrackingOtimalidade(0, &x, input->hNum, escolhas, escolhasOpt, input);
 
     printf("x: %d\n", x);
     for(int i = 0; i < input->hNum; i++) {
@@ -381,3 +372,35 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
+
+// Calcular triângulos
+    // for(int i = l; i < inp->hNum - 2; i++) {
+    //     printf("Entrei no triângulo\n");
+    //     for(int j = 0; j < inp->cNum; j++) {
+    //         // Verifica se o cara tem conflito com alguém
+    //         if(((inp->cPairs->i[j] == (i+1)) && (inp->cPairs->j[j] > (i+1))) || ((inp->cPairs->j[j] == (i+1)) && (inp->cPairs->i[j] > (i+1)))) { 
+    //             for(int k = (j + 1); k < inp->cNum; k++) {
+    //                 // Verifica se o cara tem conflito com mais alguém
+    //                 if(((inp->cPairs->i[k] == (i+1)) && (inp->cPairs->j[k] > (i+1))) || ((inp->cPairs->j[k] == (i+1)) && (inp->cPairs->i[k] > (i+1)))) { 
+    //                     for(int n = 0; n < inp->cNum; n++) {
+    //                         // Verifica se os dois caras com quem o primeiro cara tem conflito possuem conflito entre si
+    //                         // 1° Caso: ambos elementos em j
+    //                         if(((((inp->cPairs->i[n]) == (inp->cPairs->j[j])) && (inp->cPairs->i[n] != (i+1))) 
+    //                         && (((inp->cPairs->j[n]) == (inp->cPairs->j[k])) && (inp->cPairs->j[n] != (i+1))))
+    //                         || (((((inp->cPairs->i[n]) == (inp->cPairs->j[k])) && (inp->cPairs->i[n] != (i+1))) 
+    //                         && (((inp->cPairs->j[n]) == (inp->cPairs->j[j])) && (inp->cPairs->j[n] != (i+1)))))) {
+    //                             conf++;
+    //                         } 
+    //                         // 2° Caso: ambos elementos em i
+    //                         else if((((inp->cPairs->i[n]) == (inp->cPairs->i[j])) && (inp->cPairs->i[n] != (i+1))) && (((inp->cPairs->j[n]) == (inp->cPairs->i[k])) && (inp->cPairs->j[n] != (i+1)))) {
+    //                             conf++;
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+    // printf("Conf depois %d\n", conf);
+
+    // return conf;
