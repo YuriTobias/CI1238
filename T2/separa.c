@@ -65,139 +65,6 @@ void inputHandler(int argNum, char *args[], input_t *inp) {
     }
 }
 
-/*
-    Opções de entrada:
-    • l: herói da vez;
-    • x: quantidade "ótima" de conflitos;
-    • numH: número total de heróis;
-    • group[]: vetor com os heróis do grupo com o 1 herói;
-    • groupOpt[]: vetor com os heróis do grupo com o 1 herói do caso "ótimo"
-    • inp: input que contém os vetores de afinidades e conflitos
-*/
-void backtracking(int l, int *x, int numH, int group[], int groupOpt[], input_t *inp) {
-    int valido = 0;
-    int conflitos = 0;
-
-    if(l == numH) {
-        // !Tem algum grupo vazio?
-        for(int i = 0; i < numH - 1; i++) {
-            if(group[i] != group[i + 1]) {
-                valido = 1; // Valido == 1 quer dizer que existem herois nos dois grupos
-            }
-        }
-
-        // Se tem heroi nos dois grupos entra, senão segue o baile
-        if(valido) {
-            // !Todos os que possuem afinidade estão no mesmo grupo? 
-            for(int i = 0; i < numH; i++)
-                for(int j = 0; j < inp->aNum; j++)
-                    if((inp->aPairs->i[j] == (i + 1)) && group[(inp->aPairs->j[j]) - 1] != group[i])
-                        valido = 0; // Valido == 0 quer dizer que existem herois com afinidade em grupos diferentes
-        }
-
-        // Se passou pelo for acima e continuou com válido == 1 então é valido
-        if(valido) {
-            // Calcula a quantidade de conflitos presente no grupo
-            for(int i = 0; i < numH; i++)
-                for(int j = 0; j < inp->cNum; j++)
-                    if((inp->cPairs->i[j] == (i + 1)) && group[(inp->cPairs->j[j]) - 1] == group[i])
-                        conflitos++;
-
-            // Verifica se a solução é melhor ou nem
-            int cont = 0;
-            if(conflitos < *x || *x == -1) {
-                *x = conflitos;
-                groupOpt[0] = group[0];
-                cont++;
-                for(int i = 1; i < numH; i++)
-                     if(group[i] == group[0]) {
-                        groupOpt[cont] = i+1;
-                        cont++;
-                     }
-            }
-        }
-    } else {
-        group[l] = 1;
-        backtracking(l + 1, x, numH, group, groupOpt, inp);
-        group[l] = 0;
-        backtracking(l + 1, x, numH, group, groupOpt, inp);
-    }
-}
-
-/*
-    Opções de entrada:
-    • l: herói da vez;
-    • x: quantidade "ótima" de conflitos;
-    • numH: número total de heróis;
-    • group[]: vetor com os heróis do grupo com o 1 herói;
-    • groupOpt[]: vetor com os heróis do grupo com o 1 herói do caso "ótimo"
-    • inp: input que contém os vetores de afinidades e conflitos
-*/
-void backtrackingViabilidade(int l, int *x, int numH, int group[], int groupOpt[], input_t *inp) {
-    int valido = 0;
-    int conflitos = 0;
-    int caminho = -1;
-    int restricao = 0;
-
-    if(l == numH) {
-        // !Tem algum grupo vazio?
-        for(int i = 0; i < numH - 1; i++) {
-            if(group[i] != group[i + 1]) {
-                valido = 1; // Valido == 1 quer dizer que existem herois nos dois grupos
-            }
-        }
-
-        if(valido) {
-            for(int i = 0; i < numH; i++) {
-                printf("[%d] ", group[i]);
-            }
-            printf("\n");
-
-            // Calcula a quantidade de conflitos presente no grupo
-            for(int i = 0; i < numH; i++)
-                for(int j = 0; j < inp->cNum; j++)
-                    if((inp->cPairs->i[j] == (i + 1)) && group[(inp->cPairs->j[j]) - 1] == group[i])
-                        conflitos++;
-
-            // Verifica se a solução é melhor ou nem
-            int cont = 0;
-            if(conflitos < *x || *x == -1) {
-                *x = conflitos;
-                groupOpt[0] = group[0];
-                cont++;
-                for(int i = 1; i < numH; i++) {
-                    if(group[i] == group[0]) {
-                        groupOpt[cont] = i+1;
-                        cont++;
-                    }
-                }
-            }
-        }
-    } else {
-        caminho = -1;
-        for (int j = 0; j < inp->aNum; j++) {
-            if((inp->aPairs->i[j] == l+1) && (inp->aPairs->j[j] < l+1)) {
-                caminho = group[inp->aPairs->j[j] - 1];
-                restricao = 1;
-            } else if((inp->aPairs->j[j] == l+1) && (inp->aPairs->i[j] < l+1)) {
-                caminho = group[inp->aPairs->i[j] - 1];
-                restricao = 1;
-            }
-        }
-        
-
-        if(restricao) {
-            group[l] = caminho;
-            backtrackingViabilidade(l + 1, x, numH, group, groupOpt, inp);
-        } else {
-            group[l] = 1;
-            backtrackingViabilidade(l + 1, x, numH, group, groupOpt, inp);
-            group[l] = 0;
-            backtrackingViabilidade(l + 1, x, numH, group, groupOpt, inp);
-        }
-    }
-}
-
 void calculaFigura(int round, int roundMax, int first, int daVez, int *cC, input_t *inp) {
     if(round == roundMax) {
         for(int i = 0; i < inp->cNum; i++) {
@@ -230,89 +97,198 @@ void calculaFigura(int round, int roundMax, int first, int daVez, int *cC, input
     • groupOpt[]: vetor com os heróis do grupo com o 1 herói do caso "ótimo"
     • inp: input que contém os vetores de afinidades e conflitos
 */
-void backtrackingOtimalidade(int l, int *x, int numH, int group[], int groupOpt[], input_t *inp, int *qNodo) {
+void backtracking(int l, int *x, int numH, int group[], int groupOpt[], input_t *inp, int *qNodo) {
     int valido = 0;
     int conflitos = 0;
-
     *qNodo = *qNodo + 1;
 
     if(l == numH) {
         // !Tem algum grupo vazio?
-        // for(int i = 0; i < numH - 1; i++) {
-        //     if(group[i] != group[i + 1]) {
-        //         valido = 1; // Valido == 1 quer dizer que existem herois nos dois grupos
-        //     }
-        // }
-
-        // Se tem heroi nos dois grupos entra, senão segue o baile
-        // if(valido) {
-        //     // !Todos os que possuem afinidade estão no mesmo grupo? 
-        //     for(int i = 0; i < numH; i++)
-        //         for(int j = 0; j < inp->aNum; j++)
-        //             if((inp->aPairs->i[j] == (i + 1)) && group[(inp->aPairs->j[j]) - 1] != group[i])
-        //                 valido = 0; // Valido == 0 quer dizer que existem herois com afinidade em grupos diferentes
-        // }
+        for(int i = 0; i < numH - 1; i++) {
+            if(group[i] != group[i + 1]) {
+                valido = 1; // Valido == 1 quer dizer que existem herois nos dois grupos
+            }
+        }
 
         // Se passou pelo for acima e continuou com válido == 1 então é valido
-        // if(valido) {
-            // for(int i = 0; i < numH; i++) {
-            //     printf("[%d] ", group[i]);
-            // }
-            // printf("\n");
+        if(valido) {
+            // !Todos os que possuem afinidade estão no mesmo grupo? 
+            for(int i = 0; i < numH; i++)
+                for(int j = 0; j < inp->aNum; j++)
+                    if(((inp->aPairs->i[j] == (i + 1)) && group[(inp->aPairs->j[j]) - 1] != group[i]) || ((inp->aPairs->j[j] == (i + 1)) && group[(inp->aPairs->i[j]) - 1] != group[i]))
+                        return;
 
             // Calcula a quantidade de conflitos presente no grupo
             for(int i = 0; i < numH; i++)
                 for(int j = 0; j < inp->cNum; j++)
-                    if((inp->cPairs->i[j] == (i + 1)) && group[(inp->cPairs->j[j]) - 1] == group[i])
+                    if(((inp->cPairs->i[j] == (i + 1)) && (group[(inp->cPairs->j[j]) - 1] == group[i]) && (inp->cPairs->j[j] > (i + 1))) 
+                    || ((inp->cPairs->j[j] == (i + 1)) && (group[(inp->cPairs->i[j]) - 1] == group[i]) && (inp->cPairs->i[j] > (i + 1))))
                         conflitos++;
 
             // Verifica se a solução é melhor ou nem
             int cont = 0;
-            printf("Conflitos: %d e x: %d\n", conflitos, *x);
-            if(conflitos <= *x || *x == -1) {
+            if(conflitos < *x || *x == -1) {
+                for(int i = 0; i < numH; i++)
+                    groupOpt[i] = 0;
+
                 *x = conflitos;
                 groupOpt[0] = 1;
                 cont++;
-                for(int i = 1; i < numH; i++)
-                     if(group[i] == group[0]) {
+                for(int i = 1; i < numH; i++) {
+                    if(group[i] == group[0]) {
                         groupOpt[cont] = i+1;
                         cont++;
-                     }
+                    }
+                }
             }
-
-            printf("Entrei\n");
-            for(int i = 0; i < l; i++) {
-                printf("[%d] ", group[i]);
-            }
-            printf("\n");
-            printf("O número de conflitos eh: %d\n", conflitos);
-
-            // printf("Conflitos: %d\n", conflitos);
-        // }
+        }
     } else {
-        // printf("Entrei\n");
-        // for(int i = 0; i < l; i++) {
-        //     printf("[%d] ", group[i]);
-        // }
-        // printf("\n");
-        // Calcular os conflitos até então
+        group[l] = 1;
+        backtracking(l + 1, x, numH, group, groupOpt, inp, qNodo);
+        group[l] = 0;
+        backtracking(l + 1, x, numH, group, groupOpt, inp, qNodo);
+    }
+}
+
+/*
+    Opções de entrada:
+    • l: herói da vez;
+    • x: quantidade "ótima" de conflitos;
+    • numH: número total de heróis;
+    • group[]: vetor com os heróis do grupo com o 1 herói;
+    • groupOpt[]: vetor com os heróis do grupo com o 1 herói do caso "ótimo"
+    • inp: input que contém os vetores de afinidades e conflitos
+*/
+void backtrackingViabilidade(int l, int *x, int numH, int group[], int groupOpt[], input_t *inp, int *qNodo) {
+    int valido = 0;
+    int conflitos = 0;
+    int caminho = -1;
+    int restricao = 0;
+    *qNodo = *qNodo + 1;
+
+    if(l == numH) {
+        // !Tem algum grupo vazio?
+        for(int i = 0; i < numH - 1; i++) {
+            if(group[i] != group[i + 1]) {
+                valido = 1; // Valido == 1 quer dizer que existem herois nos dois grupos
+            }
+        }
+
+        if(valido) {
+            // Calcula a quantidade de conflitos presente no grupo
+            for(int i = 0; i < numH; i++)
+                for(int j = 0; j < inp->cNum; j++)
+                    if(((inp->cPairs->i[j] == (i + 1)) && (group[(inp->cPairs->j[j]) - 1] == group[i]) && (inp->cPairs->j[j] > (i + 1))) 
+                    || ((inp->cPairs->j[j] == (i + 1)) && (group[(inp->cPairs->i[j]) - 1] == group[i]) && (inp->cPairs->i[j] > (i + 1))))
+                        conflitos++;
+
+            // Verifica se a solução é melhor ou nem
+            int cont = 0;
+            if(conflitos < *x || *x == -1) {
+                for(int i = 0; i < numH; i++)
+                    groupOpt[i] = 0;
+
+                *x = conflitos;
+                groupOpt[0] = 1;
+                cont++;
+                for(int i = 1; i < numH; i++) {
+                    if(group[i] == group[0]) {
+                        groupOpt[cont] = i+1;
+                        cont++;
+                    }
+                }
+            }
+        }
+    } else {
+        for (int j = 0; j < inp->aNum; j++) {
+            if((inp->aPairs->i[j] == l+1) && (inp->aPairs->j[j] < l+1)) {
+                caminho = group[inp->aPairs->j[j] - 1];
+                restricao = 1;
+            } else if((inp->aPairs->j[j] == l+1) && (inp->aPairs->i[j] < l+1)) {
+                caminho = group[inp->aPairs->i[j] - 1];
+                restricao = 1;
+            }
+        }
+        
+        if(restricao) {
+            group[l] = caminho;
+            backtrackingViabilidade(l + 1, x, numH, group, groupOpt, inp, qNodo);
+        } else {
+            group[l] = 1;
+            backtrackingViabilidade(l + 1, x, numH, group, groupOpt, inp, qNodo);
+            group[l] = 0;
+            backtrackingViabilidade(l + 1, x, numH, group, groupOpt, inp, qNodo);
+        }
+    }
+}
+
+/*
+    Opções de entrada:
+    • l: herói da vez;
+    • x: quantidade "ótima" de conflitos;
+    • numH: número total de heróis;
+    • group[]: vetor com os heróis do grupo com o 1 herói;
+    • groupOpt[]: vetor com os heróis do grupo com o 1 herói do caso "ótimo"
+    • inp: input que contém os vetores de afinidades e conflitos
+*/
+void backtrackingOtimalidade(int l, int *x, int numH, int group[], int groupOpt[], input_t *inp, int *qNodo) {
+    int valido = 0;
+    int conflitos = 0;
+    *qNodo = *qNodo + 1;
+
+    if(l == numH) {
+        // !Tem algum grupo vazio?
+        for(int i = 0; i < numH - 1; i++) {
+            if(group[i] != group[i + 1]) {
+                valido = 1; // Valido == 1 quer dizer que existem herois nos dois grupos
+            }
+        }
+
+        //Se passou pelo for acima e continuou com válido == 1 então é valido
+        if(valido) {
+            // !Todos os que possuem afinidade estão no mesmo grupo? 
+            for(int i = 0; i < numH; i++)
+                for(int j = 0; j < inp->aNum; j++)
+                    if(((inp->aPairs->i[j] == (i + 1)) && group[(inp->aPairs->j[j]) - 1] != group[i]) || ((inp->aPairs->j[j] == (i + 1)) && group[(inp->aPairs->i[j]) - 1] != group[i]))
+                        return;  
+
+            // Calcula a quantidade de conflitos presente no grupo
+            for(int i = 0; i < numH; i++)
+                for(int j = 0; j < inp->cNum; j++)
+                    if(((inp->cPairs->i[j] == (i + 1)) && (group[(inp->cPairs->j[j]) - 1] == group[i]) && (inp->cPairs->j[j] > (i + 1))) 
+                    || ((inp->cPairs->j[j] == (i + 1)) && (group[(inp->cPairs->i[j]) - 1] == group[i]) && (inp->cPairs->i[j] > (i + 1))))
+                        conflitos++;
+
+            // Verifica se a solução é melhor ou nem
+            int cont = 0;
+            if(conflitos < *x || *x == -1) {
+                for(int i = 0; i < numH; i++)
+                    groupOpt[i] = 0;
+
+                *x = conflitos;
+                groupOpt[0] = 1;
+                cont++;
+                for(int i = 1; i < numH; i++) {
+                    if(group[i] == group[0]) {
+                        groupOpt[cont] = i+1;
+                        cont++;
+                    }
+                }
+            }
+        }
+    } else {
         for(int i = 0; i < l; i++)
             for(int j = 0; j < inp->cNum; j++) 
-                if((inp->cPairs->i[j] == (i+1)) && (inp->cPairs->j[j] < (l+1)) && (group[i] == group[inp->cPairs->j[j] - 1]))
+                if((((inp->cPairs->i[j] == (i+1)) && (inp->cPairs->j[j] < (l+1)) && (group[i] == group[inp->cPairs->j[j] - 1])) 
+                || ((inp->cPairs->j[j] == (i+1)) && (inp->cPairs->i[j] < (l+1)) && (group[i] == group[inp->cPairs->i[j] - 1]))))
                     conflitos++;
-        // printf("Conflitos antes %d\n", conflitos);
 
         for(int i = l; i < inp->hNum; i++) {
-            // calculaFigura(1, 5, i, i, &conflitos, inp);
+            calculaFigura(1, 5, i, i, &conflitos, inp);
             calculaFigura(1, 3, i, i, &conflitos, inp);
         }
 
-        // printf("O número de conflitos depois eh: %d\n", conflitos);
-        
-        if(*x == -1)
-            *x = conflitos;
-
-        if(conflitos > *x)
+        if(conflitos > *x && *x != -1)
             return;
             
         group[l] = 1;
@@ -330,13 +306,10 @@ void backtrackingOtimalidade(int l, int *x, int numH, int group[], int groupOpt[
     • group[]: vetor com os heróis do grupo com o 1 herói;
     • groupOpt[]: vetor com os heróis do grupo com o 1 herói do caso "ótimo"
     • inp: input que contém os vetores de afinidades e conflitos
+    • a == 0 -> default (usa a nossa), o == 0 -> sem corte de otimalidade e f == 0 -> sem corte de viabilidade
 */
 void separaGrupos(int l, int *x, int numH, int group[], int groupOpt[], input_t *inp, int *qNodo, int a, int o, int f) {
-    int valido = 0;
-    int conflitos = 0;
-    int caminho = -1;
-    int restricao = 0;
-
+    int valido = 0, conflitos = 0, caminho = -1, restricao = 0;
     *qNodo = *qNodo + 1;
 
     if(l == numH) {
@@ -347,39 +320,45 @@ void separaGrupos(int l, int *x, int numH, int group[], int groupOpt[], input_t 
             }
         }
 
-        // Se tem heroi nos dois grupos entra, senão segue o baile
+        // Se passou pelo for acima e continuou com válido == 1 então é valido
         if(valido) {
             // !Todos os que possuem afinidade estão no mesmo grupo? 
             for(int i = 0; i < numH; i++)
                 for(int j = 0; j < inp->aNum; j++)
-                    if((inp->aPairs->i[j] == (i + 1)) && group[(inp->aPairs->j[j]) - 1] != group[i])
-                        valido = 0; // Valido == 0 quer dizer que existem herois com afinidade em grupos diferentes
-        }
+                    if(((inp->aPairs->i[j] == (i + 1)) && group[(inp->aPairs->j[j]) - 1] != group[i]) || ((inp->aPairs->j[j] == (i + 1)) && group[(inp->aPairs->i[j]) - 1] != group[i]))
+                        return;
 
-        // Se passou pelo for acima e continuou com válido == 1 então é valido
-        if(valido) {
             // Calcula a quantidade de conflitos presente no grupo
             for(int i = 0; i < numH; i++)
                 for(int j = 0; j < inp->cNum; j++)
-                    if((inp->cPairs->i[j] == (i + 1)) && group[(inp->cPairs->j[j]) - 1] == group[i])
+                    if(((inp->cPairs->i[j] == (i + 1)) && (group[(inp->cPairs->j[j]) - 1] == group[i]) && (inp->cPairs->j[j] > (i + 1))) 
+                    || ((inp->cPairs->j[j] == (i + 1)) && (group[(inp->cPairs->i[j]) - 1] == group[i]) && (inp->cPairs->i[j] > (i + 1))))
                         conflitos++;
 
             // Verifica se a solução é melhor ou nem
             int cont = 0;
-            if(conflitos <= *x || *x == -1) {
+            if(conflitos < *x || *x == -1) {
+                printf("Entrei %d %d %d\n", l, *x, conflitos);
+                for(int i = 0; i < l; i++) {
+                    printf("[%d] ", group[i]);
+                }
+                printf("\n");
+                for(int i = 0; i < numH; i++)
+                    groupOpt[i] = 0;
+
                 *x = conflitos;
                 groupOpt[0] = 1;
                 cont++;
-                for(int i = 1; i < numH; i++)
-                     if(group[i] == group[0]) {
+                for(int i = 1; i < numH; i++) {
+                    if(group[i] == group[0]) {
                         groupOpt[cont] = i+1;
                         cont++;
-                     }
+                    }
+                }
             }
         }
     } else {
         if(f && !o) {
-            caminho = -1;
             for (int j = 0; j < inp->aNum; j++) {
                 if((inp->aPairs->i[j] == l+1) && (inp->aPairs->j[j] < l+1)) {
                     caminho = group[inp->aPairs->j[j] - 1];
@@ -392,23 +371,19 @@ void separaGrupos(int l, int *x, int numH, int group[], int groupOpt[], input_t 
         } else if(o && !f) {
             for(int i = 0; i < l; i++)
                 for(int j = 0; j < inp->cNum; j++) 
-                    if((inp->cPairs->i[j] == (i+1)) && (inp->cPairs->j[j] < (l+1)) && (group[i] == group[inp->cPairs->j[j] - 1]))
+                    if((((inp->cPairs->i[j] == (i+1)) && (inp->cPairs->j[j] < (l+1)) && (group[i] == group[inp->cPairs->j[j] - 1])) 
+                    || ((inp->cPairs->j[j] == (i+1)) && (inp->cPairs->i[j] < (l+1)) && (group[i] == group[inp->cPairs->i[j] - 1]))))
                         conflitos++;
 
             for(int i = l; i < inp->hNum; i++) {
                 if(!a)
                     calculaFigura(1, 5, i, i, &conflitos, inp);
-                
                 calculaFigura(1, 3, i, i, &conflitos, inp);
             }
 
-            // if(*x == -1)
-            *x = 70000;
-
-            if(conflitos > *x)
+            if(conflitos > *x && *x != -1)
                 return;
         } else if (f && o) {
-            caminho = -1;
             for (int j = 0; j < inp->aNum; j++) {
                 if((inp->aPairs->i[j] == l+1) && (inp->aPairs->j[j] < l+1)) {
                     caminho = group[inp->aPairs->j[j] - 1];
@@ -421,20 +396,17 @@ void separaGrupos(int l, int *x, int numH, int group[], int groupOpt[], input_t 
 
             for(int i = 0; i < l; i++)
                 for(int j = 0; j < inp->cNum; j++) 
-                    if((inp->cPairs->i[j] == (i+1)) && (inp->cPairs->j[j] < (l+1)) && (group[i] == group[inp->cPairs->j[j] - 1]))
+                    if((((inp->cPairs->i[j] == (i+1)) && (inp->cPairs->j[j] < (l+1)) && (group[i] == group[inp->cPairs->j[j] - 1])) 
+                    || ((inp->cPairs->j[j] == (i+1)) && (inp->cPairs->i[j] < (l+1)) && (group[i] == group[inp->cPairs->i[j] - 1]))))
                         conflitos++;
 
             for(int i = l; i < inp->hNum; i++) {
                 if(!a)
                     calculaFigura(1, 5, i, i, &conflitos, inp);
-                
                 calculaFigura(1, 3, i, i, &conflitos, inp);
             }
 
-            if(*x == -1)
-                *x = conflitos;
-
-            if(conflitos > *x)
+            if(conflitos > *x && *x != -1)
                 return;
         }
 
@@ -474,10 +446,10 @@ int main(int argc, char *argv[]) {
     inputHandler(argc, argv, input);
 
     printf("Quant: %d\n", quant);
-    //backtracking(0, &x, input->hNum, escolhas, escolhasOpt, input);
-    //backtrackingViabilidade(0, &x, input->hNum, escolhas, escolhasOpt, input);
+    //backtracking(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant);
+    //backtrackingViabilidade(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant);
     //backtrackingOtimalidade(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant);
-    separaGrupos(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant, 1, 1, 0);
+    separaGrupos(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant, 1, 1, 1);
     printf("Quant: %d\n", quant);
 
     printf("x: %d\n", x);
@@ -488,35 +460,6 @@ int main(int argc, char *argv[]) {
     }
     printf("\n");
     
-    // X é o grupo ótimo
-    // minC(X, l, n) { 
-    // l => altura da arvore
-    // n => quantidade de herois
-    // if l == n
-    //     {   
-    //         // Afinidades:
-    //         // !Todos os que possuem afinidade estão no mesmo grupo? 
-    //         // !Tem algum grupo vazio?
-    //             {
-    //                 // Otimalidade
-    //                 NumCAtual < NumCOpt
-    //                     // Deu boa, faz a troca
-    //                     // Salvar OptX 
-    //             }
-    //     }
-    // else 
-    //     {
-    //         // Coloca no Grupo A
-    //         // Não coloca no Grupo A
-    //     }
-    // }
-    // Here hoes the whole logic
-    // for(int i = 0; i < input->cNum; i++) {
-    //     printf("%d,%d\n", input->cPairs->i[i], input->cPairs->j[i]);
-    // }
-    // for(int i = 0; i < input->aNum; i++) {
-    //     printf("%d,%d\n", input->aPairs->i[i], input->aPairs->j[i]);
-    // }
     deleteInput(input);
 
     return 0;
