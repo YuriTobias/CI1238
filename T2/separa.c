@@ -1,5 +1,7 @@
 /*
-    Trabalho desenvolvido pelo discente Yuri Junqueira Tobias
+    Trabalho desenvolvido pelos seguintes discentes
+    • Yuri Junqueira Tobias - GRR20211767
+    • Pedro Amaral Chapelin - GRR20206145
     Data: 09/06/2023
     Docente: André Guedes
     Disciplina: Otimização - CI1238
