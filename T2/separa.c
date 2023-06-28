@@ -446,8 +446,8 @@ int main(int argc, char *argv[]) {
     input_t *input = malloc(sizeof(input_t));
     int escolhas[100], x = -1, escolhasOpt[100], quant = 0;
     int funcaoLimitanteFlag = 0;
-    int viabilidadeFlag = 0;
-    int otimalidadeFlag = 0;
+    int viabilidadeFlag = 1;
+    int otimalidadeFlag = 1;
     int option;
 
     while ((option = getopt(argc, argv, "afo")) != -1) {
@@ -456,10 +456,10 @@ int main(int argc, char *argv[]) {
                 funcaoLimitanteFlag = 1;
                 break;
             case 'f': // -f digitado
-                viabilidadeFlag = 1;
+                viabilidadeFlag = 0;
                 break;
             case 'o': // -o digitado
-                otimalidadeFlag = 1;
+                otimalidadeFlag = 0;
                 break;
             default:
                 fprintf(stderr, "Atributos possiveis: %s -a -f -o\n", argv[0]);
