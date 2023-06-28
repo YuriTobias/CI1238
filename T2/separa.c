@@ -69,25 +69,52 @@ void inputHandler(int argNum, char *args[], input_t *inp) {
     }
 }
 
-void calculaFigura(int round, int roundMax, int first, int daVez, int *cC, input_t *inp) {
+int contador = 0;
+
+void calculaFigura(int round, int roundMax, int first, int daVez, int *cC, input_t *inp, sets_t *saved, sets_t *temp) {
+    int limit = 0;
+
     if(round == roundMax) {
         for(int i = 0; i < inp->cNum; i++) {
-            if(inp->cPairs->i[i] == daVez && inp->cPairs->j[i] == first) {
+            if((inp->cPairs->i[i] == daVez && inp->cPairs->j[i] == first) || (inp->cPairs->j[i] == daVez && inp->cPairs->i[i] == first)) {
+                temp->i[round-1] = daVez;
+                temp->j[round-1] = first;
+
+                limit = roundMax == 5 ? 5 : 3;
+
+                for(int j = 0; j < limit; j++) {
+                    saved->i[contador] = temp->i[j];
+                    saved->j[contador] = temp->j[j];
+                    contador++;
+                }
+
+                for(int j = 0; j < limit; j++)
+                    printf("[%d] ", temp->i[j]);
+                printf("[%d]\n", temp->j[4]);
+                
                 *cC = *cC + 1;
                 return;
-            } else if(inp->cPairs->j[i] == daVez && inp->cPairs->i[i] == first) {
-                *cC = *cC + 1;
-                return;
-            }
+            } 
         }
     } else {
         for(int i = 0; i < inp->cNum; i++) {
-            if(inp->cPairs->i[i] == daVez && inp->cPairs->j[i] > daVez) {
-                (roundMax == 5) ? calculaFigura(round + 1, 5, first, inp->cPairs->j[i], cC, inp) : calculaFigura(round + 1, 3, first, inp->cPairs->j[i], cC, inp);
+            if(inp->cPairs->i[i] == daVez) {
+                temp->i[round-1] = inp->cPairs->i[i];
+                for(int k = 0; k < 20; k++) 
+                    if((inp->cPairs->i[i] == saved->i[k] && inp->cPairs->j[i] == saved->j[k]) 
+                    || (inp->cPairs->i[i] == saved->j[k] && inp->cPairs->j[i] == saved->i[k])) 
+                        return;
+                temp->j[round-1] = inp->cPairs->j[i];
+                (roundMax == 5) ? calculaFigura(round + 1, 5, first, inp->cPairs->j[i], cC, inp, saved, temp) : calculaFigura(round + 1, 3, first, inp->cPairs->j[i], cC, inp, saved, temp);
+            } else if(inp->cPairs->j[i] == daVez) {
+                temp->i[round-1] = inp->cPairs->j[i];
+                for(int k = 0; k < 20; k++) 
+                    if((inp->cPairs->j[i] == saved->i[k] && inp->cPairs->i[i] == saved->j[k]) 
+                    || (inp->cPairs->j[i] == saved->j[k] && inp->cPairs->i[i] == saved->i[k])) 
+                        return;
+                temp->j[round-1] = inp->cPairs->i[i];
+                (roundMax == 5) ? calculaFigura(round + 1, 5, first, inp->cPairs->i[i], cC, inp, saved, temp) : calculaFigura(round + 1, 3, first, inp->cPairs->i[i], cC, inp, saved, temp);
             }
-                
-            else if(inp->cPairs->j[i] == daVez && inp->cPairs->i[i] > daVez)
-                (roundMax == 5) ? calculaFigura(round + 1, 5, first, inp->cPairs->i[i], cC, inp) : calculaFigura(round + 1, 3, first, inp->cPairs->i[i], cC, inp);
         }
     }
 }
@@ -288,8 +315,8 @@ void backtrackingOtimalidade(int l, int *x, int numH, int group[], int groupOpt[
                     conflitos++;
 
         for(int i = l; i < inp->hNum; i++) {
-            calculaFigura(1, 5, i, i, &conflitos, inp);
-            calculaFigura(1, 3, i, i, &conflitos, inp);
+            // calculaFigura(1, 5, i, i, &conflitos, inp);
+            // calculaFigura(1, 3, i, i, &conflitos, inp);
         }
 
         if(conflitos > *x && *x != -1)
@@ -312,7 +339,7 @@ void backtrackingOtimalidade(int l, int *x, int numH, int group[], int groupOpt[
     • inp: input que contém os vetores de afinidades e conflitos
     • a == 0 -> default (usa a nossa), o == 0 -> sem corte de otimalidade e f == 0 -> sem corte de viabilidade
 */
-void separaGrupos(int l, int *x, int numH, int group[], int groupOpt[], input_t *inp, int *qNodo, int a, int o, int f) {
+void separaGrupos(int l, int *x, int numH, int group[], int groupOpt[], input_t *inp, int *qNodo, int a, int o, int f, sets_t *saved, sets_t *temp) {
     int valido = 0, conflitos = 0, caminho = -1, restricao = 0;
     *qNodo = *qNodo + 1;
 
@@ -379,12 +406,14 @@ void separaGrupos(int l, int *x, int numH, int group[], int groupOpt[], input_t 
                     || ((inp->cPairs->j[j] == (i+1)) && (inp->cPairs->i[j] < (l+1)) && (group[i] == group[inp->cPairs->i[j] - 1]))))
                         conflitos++;
 
+            printf("A quantidade de conflitos antes da estimativa é: %d\n", conflitos);
             for(int i = l; i < inp->hNum; i++) {
                 if(!a)
-                    calculaFigura(1, 5, i, i, &conflitos, inp);
-                calculaFigura(1, 3, i, i, &conflitos, inp);
+                    calculaFigura(1, 5, i, i, &conflitos, inp, saved, temp);
+                calculaFigura(1, 3, i, i, &conflitos, inp, saved, temp);
             }
-
+            printf("A quantidade de conflitos após a estimativa é: %d\n", conflitos);
+            
             if(conflitos > *x && *x != -1)
                 return;
         } else if (f && o) {
@@ -406,8 +435,8 @@ void separaGrupos(int l, int *x, int numH, int group[], int groupOpt[], input_t 
 
             for(int i = l; i < inp->hNum; i++) {
                 if(!a)
-                    calculaFigura(1, 5, i, i, &conflitos, inp);
-                calculaFigura(1, 3, i, i, &conflitos, inp);
+                    calculaFigura(1, 5, i, i, &conflitos, inp, saved, temp);
+                calculaFigura(1, 3, i, i, &conflitos, inp, saved, temp);
             }
 
             if(conflitos > *x && *x != -1)
@@ -417,18 +446,18 @@ void separaGrupos(int l, int *x, int numH, int group[], int groupOpt[], input_t 
         if(f) {
             if(restricao) {
                 group[l] = caminho;
-                separaGrupos(l + 1, x, numH, group, groupOpt, inp, qNodo, a, o, f);
+                separaGrupos(l + 1, x, numH, group, groupOpt, inp, qNodo, a, o, f, saved, temp);
             } else {
                 group[l] = 1;
-                separaGrupos(l + 1, x, numH, group, groupOpt, inp, qNodo, a, o, f);
+                separaGrupos(l + 1, x, numH, group, groupOpt, inp, qNodo, a, o, f, saved, temp);
                 group[l] = 0;
-                separaGrupos(l + 1, x, numH, group, groupOpt, inp, qNodo, a, o, f);
+                separaGrupos(l + 1, x, numH, group, groupOpt, inp, qNodo, a, o, f, saved, temp);
             }
         } else {
             group[l] = 1;
-            separaGrupos(l + 1, x, numH, group, groupOpt, inp, qNodo, a, o, f);
+            separaGrupos(l + 1, x, numH, group, groupOpt, inp, qNodo, a, o, f, saved, temp);
             group[l] = 0;
-            separaGrupos(l + 1, x, numH, group, groupOpt, inp, qNodo, a, o, f);
+            separaGrupos(l + 1, x, numH, group, groupOpt, inp, qNodo, a, o, f, saved, temp);
         }
     }
 }
@@ -452,6 +481,14 @@ int main(int argc, char *argv[]) {
     int option;
     clock_t start_time, end_time; 
     double execution_time;
+    sets_t *pentagonos, *temporario;
+    pentagonos = malloc(sizeof(sets_t));
+    temporario = malloc(sizeof(sets_t));
+
+    pentagonos->i = malloc(sizeof(int)*20);
+    pentagonos->j = malloc(sizeof(int)*20);
+    temporario->i = malloc(sizeof(int)*5);
+    temporario->j = malloc(sizeof(int)*5);
 
     while ((option = getopt(argc, argv, "afo")) != -1) {
         switch (option) {
@@ -478,7 +515,7 @@ int main(int argc, char *argv[]) {
     //backtracking(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant);
     //backtrackingViabilidade(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant);
     //backtrackingOtimalidade(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant);
-    separaGrupos(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant, funcaoLimitanteFlag, otimalidadeFlag, viabilidadeFlag);
+    separaGrupos(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant, funcaoLimitanteFlag, otimalidadeFlag, viabilidadeFlag, pentagonos, temporario);
     printf("Quant: %d\n", quant);
 
     end_time = clock(); // Tempo final
@@ -494,6 +531,12 @@ int main(int argc, char *argv[]) {
 
     printf("Tempo de execucao: %.4f segundos\n", execution_time);
     
+    free(pentagonos->i);
+    free(pentagonos->j);
+    free(temporario->i);
+    free(temporario->j);
+    free(pentagonos);
+    free(temporario);
     deleteInput(input);
 
     return 0;
