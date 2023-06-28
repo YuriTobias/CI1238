@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 
 typedef struct sets_t {
     int *i;
@@ -449,6 +450,8 @@ int main(int argc, char *argv[]) {
     int viabilidadeFlag = 1;
     int otimalidadeFlag = 1;
     int option;
+    clock_t start_time, end_time; 
+    double execution_time;
 
     while ((option = getopt(argc, argv, "afo")) != -1) {
         switch (option) {
@@ -469,12 +472,17 @@ int main(int argc, char *argv[]) {
 
     inputHandler(argc, argv, input);
 
+    start_time = clock(); // Comeca a contar o tempo
+
     printf("Quant: %d\n", quant);
     //backtracking(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant);
     //backtrackingViabilidade(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant);
     //backtrackingOtimalidade(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant);
     separaGrupos(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant, funcaoLimitanteFlag, otimalidadeFlag, viabilidadeFlag);
     printf("Quant: %d\n", quant);
+
+    end_time = clock(); // Tempo final
+    execution_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
 
     printf("x: %d\n", x);
     for(int i = 0; i < input->hNum; i++) {
@@ -483,6 +491,8 @@ int main(int argc, char *argv[]) {
             i = input->hNum;
     }
     printf("\n");
+
+    printf("Tempo de execucao: %.4f segundos\n", execution_time);
     
     deleteInput(input);
 
