@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 typedef struct sets_t {
     int *i;
@@ -444,6 +445,27 @@ void deleteInput(input_t *inp) {
 int main(int argc, char *argv[]) {
     input_t *input = malloc(sizeof(input_t));
     int escolhas[100], x = -1, escolhasOpt[100], quant = 0;
+    int funcaoLimitanteFlag = 0;
+    int viabilidadeFlag = 0;
+    int otimalidadeFlag = 0;
+    int option;
+
+    while ((option = getopt(argc, argv, "afo")) != -1) {
+        switch (option) {
+            case 'a': // -a digitado
+                funcaoLimitanteFlag = 1;
+                break;
+            case 'f': // -f digitado
+                viabilidadeFlag = 1;
+                break;
+            case 'o': // -o digitado
+                otimalidadeFlag = 1;
+                break;
+            default:
+                fprintf(stderr, "Atributos possiveis: %s -a -f -o\n", argv[0]);
+                exit(1);
+        }
+    }
 
     inputHandler(argc, argv, input);
 
@@ -451,7 +473,7 @@ int main(int argc, char *argv[]) {
     //backtracking(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant);
     //backtrackingViabilidade(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant);
     //backtrackingOtimalidade(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant);
-    separaGrupos(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant, 1, 1, 1);
+    separaGrupos(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant, funcaoLimitanteFlag, otimalidadeFlag, viabilidadeFlag);
     printf("Quant: %d\n", quant);
 
     printf("x: %d\n", x);
