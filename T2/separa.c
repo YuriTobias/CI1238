@@ -88,9 +88,9 @@ void calculaFigura(int round, int roundMax, int first, int daVez, int *cC, input
                     contador++;
                 }
 
-                for(int j = 0; j < limit; j++)
-                    printf("[%d] ", temp->i[j]);
-                printf("[%d]\n", temp->j[4]);
+                //for(int j = 0; j < limit; j++)
+                  //  printf("[%d] ", temp->i[j]);
+                //printf("[%d]\n", temp->j[4]);
                 
                 *cC = *cC + 1;
                 return;
@@ -337,6 +337,7 @@ void backtrackingOtimalidade(int l, int *x, int numH, int group[], int groupOpt[
     • group[]: vetor com os heróis do grupo com o 1 herói;
     • groupOpt[]: vetor com os heróis do grupo com o 1 herói do caso "ótimo"
     • inp: input que contém os vetores de afinidades e conflitos
+    • qNodo: Quantidade de nodos percorridos;
     • a == 0 -> default (usa a nossa), o == 0 -> sem corte de otimalidade e f == 0 -> sem corte de viabilidade
 */
 void separaGrupos(int l, int *x, int numH, int group[], int groupOpt[], input_t *inp, int *qNodo, int a, int o, int f, sets_t *saved, sets_t *temp) {
@@ -369,11 +370,11 @@ void separaGrupos(int l, int *x, int numH, int group[], int groupOpt[], input_t 
             // Verifica se a solução é melhor ou nem
             int cont = 0;
             if(conflitos < *x || *x == -1) {
-                printf("Entrei %d %d %d\n", l, *x, conflitos);
-                for(int i = 0; i < l; i++) {
-                    printf("[%d] ", group[i]);
-                }
-                printf("\n");
+                //printf("Entrei %d %d %d\n", l, *x, conflitos);
+                //for(int i = 0; i < l; i++) {
+                  //  printf("[%d] ", group[i]);
+               // }
+                //printf("\n");
                 for(int i = 0; i < numH; i++)
                     groupOpt[i] = 0;
 
@@ -406,13 +407,13 @@ void separaGrupos(int l, int *x, int numH, int group[], int groupOpt[], input_t 
                     || ((inp->cPairs->j[j] == (i+1)) && (inp->cPairs->i[j] < (l+1)) && (group[i] == group[inp->cPairs->i[j] - 1]))))
                         conflitos++;
 
-            printf("A quantidade de conflitos antes da estimativa é: %d\n", conflitos);
+            //printf("A quantidade de conflitos antes da estimativa é: %d\n", conflitos);
             for(int i = l; i < inp->hNum; i++) {
                 if(!a)
                     calculaFigura(1, 5, i, i, &conflitos, inp, saved, temp);
                 calculaFigura(1, 3, i, i, &conflitos, inp, saved, temp);
             }
-            printf("A quantidade de conflitos após a estimativa é: %d\n", conflitos);
+            //printf("A quantidade de conflitos após a estimativa é: %d\n", conflitos);
             
             if(conflitos > *x && *x != -1)
                 return;
@@ -511,17 +512,16 @@ int main(int argc, char *argv[]) {
 
     start_time = clock(); // Comeca a contar o tempo
 
-    printf("Quant: %d\n", quant);
+    //printf("Quant: %d\n", quant);
     //backtracking(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant);
     //backtrackingViabilidade(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant);
     //backtrackingOtimalidade(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant);
     separaGrupos(0, &x, input->hNum, escolhas, escolhasOpt, input, &quant, funcaoLimitanteFlag, otimalidadeFlag, viabilidadeFlag, pentagonos, temporario);
-    printf("Quant: %d\n", quant);
 
     end_time = clock(); // Tempo final
     execution_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
 
-    printf("x: %d\n", x);
+    printf("%d\n", x);
     for(int i = 0; i < input->hNum; i++) {
         printf("%d ", escolhasOpt[i]);
         if(escolhasOpt[i + 1] == 0)
@@ -529,7 +529,8 @@ int main(int argc, char *argv[]) {
     }
     printf("\n");
 
-    printf("Tempo de execucao: %.4f segundos\n", execution_time);
+    fprintf(stderr, "\nQuantidade de nós: %d\n", quant);
+    fprintf(stderr, "Tempo gasto: %.6f segundos\n", execution_time);
     
     free(pentagonos->i);
     free(pentagonos->j);
