@@ -71,50 +71,23 @@ void inputHandler(int argNum, char *args[], input_t *inp) {
 
 int contador = 0;
 
-void calculaFigura(int round, int roundMax, int first, int daVez, int *cC, input_t *inp, sets_t *saved, sets_t *temp) {
-    int limit = 0;
-
+void calculaFigura(int round, int roundMax, int first, int daVez, int *cC, input_t *inp) {
     if(round == roundMax) {
         for(int i = 0; i < inp->cNum; i++) {
-            if((inp->cPairs->i[i] == daVez && inp->cPairs->j[i] == first) || (inp->cPairs->j[i] == daVez && inp->cPairs->i[i] == first)) {
-                temp->i[round-1] = daVez;
-                temp->j[round-1] = first;
-
-                limit = roundMax == 5 ? 5 : 3;
-
-                for(int j = 0; j < limit; j++) {
-                    saved->i[contador] = temp->i[j];
-                    saved->j[contador] = temp->j[j];
-                    contador++;
-                }
-
-                //for(int j = 0; j < limit; j++)
-                  //  printf("[%d] ", temp->i[j]);
-                //printf("[%d]\n", temp->j[4]);
-                
+            if(inp->cPairs->i[i] == daVez && inp->cPairs->j[i] == first) {
                 *cC = *cC + 1;
                 return;
-            } 
+            } else if(inp->cPairs->j[i] == daVez && inp->cPairs->i[i] == first) {
+                *cC = *cC + 1;
+                return;
+            }
         }
     } else {
         for(int i = 0; i < inp->cNum; i++) {
-            if(inp->cPairs->i[i] == daVez) {
-                temp->i[round-1] = inp->cPairs->i[i];
-                for(int k = 0; k < 20; k++) 
-                    if((inp->cPairs->i[i] == saved->i[k] && inp->cPairs->j[i] == saved->j[k]) 
-                    || (inp->cPairs->i[i] == saved->j[k] && inp->cPairs->j[i] == saved->i[k])) 
-                        return;
-                temp->j[round-1] = inp->cPairs->j[i];
-                (roundMax == 5) ? calculaFigura(round + 1, 5, first, inp->cPairs->j[i], cC, inp, saved, temp) : calculaFigura(round + 1, 3, first, inp->cPairs->j[i], cC, inp, saved, temp);
-            } else if(inp->cPairs->j[i] == daVez) {
-                temp->i[round-1] = inp->cPairs->j[i];
-                for(int k = 0; k < 20; k++) 
-                    if((inp->cPairs->j[i] == saved->i[k] && inp->cPairs->i[i] == saved->j[k]) 
-                    || (inp->cPairs->j[i] == saved->j[k] && inp->cPairs->i[i] == saved->i[k])) 
-                        return;
-                temp->j[round-1] = inp->cPairs->i[i];
-                (roundMax == 5) ? calculaFigura(round + 1, 5, first, inp->cPairs->i[i], cC, inp, saved, temp) : calculaFigura(round + 1, 3, first, inp->cPairs->i[i], cC, inp, saved, temp);
-            }
+            if(inp->cPairs->i[i] == daVez && inp->cPairs->j[i] > daVez) {
+                (roundMax == 5) ? calculaFigura(round + 1, 5, first, inp->cPairs->j[i], cC, inp) : calculaFigura(round + 1, 3, first, inp->cPairs->j[i], cC, inp);
+            } else if(inp->cPairs->j[i] == daVez && inp->cPairs->i[i] > daVez)
+                (roundMax == 5) ? calculaFigura(round + 1, 5, first, inp->cPairs->i[i], cC, inp) : calculaFigura(round + 1, 3, first, inp->cPairs->i[i], cC, inp);
         }
     }
 }
@@ -410,8 +383,8 @@ void separaGrupos(int l, int *x, int numH, int group[], int groupOpt[], input_t 
             //printf("A quantidade de conflitos antes da estimativa é: %d\n", conflitos);
             for(int i = l; i < inp->hNum; i++) {
                 if(!a)
-                    calculaFigura(1, 5, i, i, &conflitos, inp, saved, temp);
-                calculaFigura(1, 3, i, i, &conflitos, inp, saved, temp);
+                    calculaFigura(1, 5, i, i, &conflitos, inp);
+                calculaFigura(1, 3, i, i, &conflitos, inp);
             }
             //printf("A quantidade de conflitos após a estimativa é: %d\n", conflitos);
             
@@ -436,8 +409,8 @@ void separaGrupos(int l, int *x, int numH, int group[], int groupOpt[], input_t 
 
             for(int i = l; i < inp->hNum; i++) {
                 if(!a)
-                    calculaFigura(1, 5, i, i, &conflitos, inp, saved, temp);
-                calculaFigura(1, 3, i, i, &conflitos, inp, saved, temp);
+                    calculaFigura(1, 5, i, i, &conflitos, inp);
+                calculaFigura(1, 3, i, i, &conflitos, inp);
             }
 
             if(conflitos > *x && *x != -1)
